@@ -228,6 +228,31 @@ hex_output.pack(side="left")
 button_clear = tk.Button(window, text="Clear", command=clear)
 button_clear.pack(pady=5)
 
+def export_output():
+    convert()
+    # Get the details to export
+    sign_bit = binary_output.cget("text").split()[0]
+    binary_exponent = binary_output.cget("text").split()[1]
+    binary_mantissa = binary_output.cget("text").split()[2]
+
+    # Create the file path
+    file_path = "./output.txt"
+
+    # Write the details to the file
+    with open(file_path, "w") as file:
+        file.write("Sign Bit: {}\n".format(sign_bit))
+        file.write("Binary Exponent: {}\n".format(binary_exponent))
+        file.write("Binary Mantissa: {}\n".format(binary_mantissa))
+        file.write("Full Binary Output: {}\n".format(binary_output.cget("text")))
+        file.write("Hexadecimal Output: {}\n".format(hex_output.cget("text")))
+
+    # Show success message
+    error_message.config(text="Exported output as .txt successfully.")
+
+# Create the export button
+button_export = tk.Button(window, text="Output as .txt", command=export_output)
+button_export.pack(pady=5)
+
 
 # Start the Tkinter event loop
 window.mainloop()
