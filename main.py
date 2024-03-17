@@ -3,6 +3,7 @@ import tkinter as tk
 
 # Main Convert Logic
 def convert():
+    clear_output()
     sign_bit = ""
     # Get the selected conversion type 
     selected_conversion_type = conversion_type.get()
@@ -15,8 +16,8 @@ def convert():
             sign_bit = "0"
         binary_input = str(input_mantissa_dec.get())
 
-        if not (all(bit in ['0', '1'] for bit in binary_input)):
-            error_message.config(text="Error: Invalid binary mantissa input.")
+        if not all(bit in '01.' for bit in binary_input) or binary_input.count('.') > 1: 
+            error_message.config(text="Error: Invalid binary input.")
             return 0
          # Get the exponent integer input from the entry widget
         try:
@@ -24,7 +25,8 @@ def convert():
         except ValueError:
             error_message.config(text="Error: Invalid exponent input. Must be integer.")
             return 0
-        binary_convert_to_floating_point(sign_bit, binary_input, exponent_input)
+        mantissa, exponent = normalize_binary(binary_input, exponent_input)
+        binary_convert_to_floating_point(sign_bit, mantissa, exponent)
     else:
         float_input = float(input_mantissa_dec.get())
         if sign.get() == "Negative":
@@ -55,7 +57,7 @@ def binary_convert_to_floating_point(sign, mantissa, exponent):
         # Have another mantissa variable but with ellipsis for output
         mantissa_output = mantissa + "0...0"
     else:
-        binary_mantissa = "0"*112
+        binary_mantissa = "0" * 112
         mantissa_output = "0...0"
 
     print("sign bit: ", sign_bit)
@@ -88,13 +90,13 @@ def decimal_convert_to_normalized_binary(decimal, exponent):
     print(binary)
 
     # Normalize the binary 
-    normalized_binary, new_exponent = normalize_binary(binary)
+    normalized_binary, new_exponent = normalize_binary(binary, 0)
 
     print(normalized_binary, "  ", new_exponent)
 
     return normalized_binary, new_exponent
 
-def normalize_binary(binary):
+def normalize_binary(binary, exponent):
     # Find the position of the first '1' before the decimal
     dot_position = binary.find('.')
     first_one_position = binary.find('1')
@@ -112,10 +114,14 @@ def normalize_binary(binary):
         normalized_binary = binary[first_one_position-1] + "." + binary[first_one_position:]
         new_exponent = shift 
 
+    new_exponent += exponent
+
+    print(normalized_binary)
+
     return normalized_binary[2:], new_exponent 
 
-def fraction_to_binary(fraction, precision=32):
-    binary = ""  # Initialize with "0." for the fractional part
+def fraction_to_binary(fraction, precision=112):
+    binary = ""  # Initialize with "" for the fractional part
     while fraction > 0 and precision > 0:
         fraction *= 2
         int_part = int(fraction)
@@ -131,17 +137,25 @@ def update_label():
     selected_conversion_type = conversion_type.get()
     print(selected_conversion_type)
     if selected_conversion_type == "Binary":
-        label_mantissa_dec.config(text="Binary Mantissa:")
+        label_mantissa_dec.config(text="Binary:")
         label_exponent.config(text="Base-2 Exponent:")
     else :
         label_mantissa_dec.config(text="Decimal:")
         label_exponent.config(text="Base-10 Exponent:")
 
 def clear():
-    input_mantissa_dec.delete(0, "end")
-    exp_input.delete(0, "end")
+    clear_input()
+    clear_output()
+
+def clear_output():
     binary_output.config(text="")
     hex_output.config(text="")
+    error_message.config(text="")
+
+def clear_input():
+    input_mantissa_dec.delete(0, "end")
+    exp_input.delete(0, "end")
+    error_message.config(text="")
 
 # Create the Tkinter window
 window = tk.Tk()
@@ -186,7 +200,7 @@ input_frame2.pack(side="left", padx=10)
 
 
 # Create the float input label and entry widget
-label_mantissa_dec = tk.Label(input_frame1, text="Binary Mantissa:")
+label_mantissa_dec = tk.Label(input_frame1, text="Binary:")
 label_mantissa_dec.pack(side="top")
 input_mantissa_dec = tk.Entry(input_frame1)
 input_mantissa_dec.pack(side="left")
