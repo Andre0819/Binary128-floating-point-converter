@@ -5,6 +5,8 @@ sys.set_int_max_str_digits(5000)
 decimal.getcontext().prec = 112
 Decimal = decimal.Decimal
 
+MAX_MANTISSA_LENGTH = 112
+
 # Main Convert Logic
 def convert():
     clear_output()
@@ -34,24 +36,23 @@ def convert():
         mantissa, exponent = normalize_binary(binary_input, exponent_input)
         mantissa = limit_mantissa(mantissa)
         print("normalized: ", mantissa, exponent)
-        binary_convert_to_floating_point(sign_bit, mantissa, exponent)
+        convert_binary_to_floating_point(sign_bit, mantissa, exponent)
     else:
         float_input = str(input_mantissa_dec.get())
         if float_input[0] == "-":
             sign_bit = "1"
             float_input = float_input[1:]
         exponent_input = int(exp_input.get())
-        mantissa, exponent = decimal_convert_to_normalized_binary(float_input, exponent_input)
+        mantissa, exponent = convert_decimal_to_normalized_binary(float_input, exponent_input)
         mantissa = limit_mantissa(mantissa)
         print("normalized: ", len(mantissa), mantissa, exponent)
-        binary_convert_to_floating_point(sign_bit, mantissa, exponent)
+        convert_binary_to_floating_point(sign_bit, mantissa, exponent)
 
-def binary_convert_to_floating_point(sign, mantissa, exponent):
+def convert_binary_to_floating_point(sign, mantissa, exponent):
+    # Converts normalized binary input to IEEE-754 Binary128 floating-point representation.
     infinite_flag = False
-    # Set sign bit
-    sign_bit = sign
     
-    # Compute binary of exponent
+    # Compute binary of exponent (with special cases)
     if exponent <= 16383 and exponent >= -16382:
         binary_exponent = bin((exponent + 16383))[2:].zfill(15)
     elif exponent > 16383:
@@ -62,88 +63,67 @@ def binary_convert_to_floating_point(sign, mantissa, exponent):
     
     # Compute binary of mantissa
     if infinite_flag == False:
-        if len(mantissa) < 112:
-            mantissa = mantissa + "0" * (112 - len(mantissa))
-            mantissa_output = mantissa + "0...0"
-        binary_mantissa = mantissa
-        print(mantissa)
-        print(len(binary_mantissa), binary_mantissa)
-        # Have another mantissa variable but with ellipsis for output
-        mantissa_output = binary_mantissa
+        # Truncation logic remains the same
+        binary_mantissa = mantissa[:MAX_MANTISSA_LENGTH] + "0" * (MAX_MANTISSA_LENGTH - len(mantissa))
     else:
-        binary_mantissa = "0" * 112
-        mantissa_output = "0...0"
+        binary_mantissa = "0" * MAX_MANTISSA_LENGTH
 
-    print("sign bit: ", sign_bit)
+    print("sign bit: ", sign)
     print("binary exponent: ", binary_exponent)
     print("binary mantissa: ", binary_mantissa)
 
-    binary_output.config(text=sign_bit + "  " + binary_exponent + "  " + mantissa_output)
+    binary_output.config(text=sign + "  " + binary_exponent + "  " + binary_mantissa)
 
     # Print hexadecimal output
-    hex_output_text = hex(int(sign_bit + binary_exponent + binary_mantissa, 2))[2:].zfill(16)
-    hex_output_text_split = ' '.join([hex_output_text[i:i+4] for i in range(0, len(hex_output_text), 4)])
-    hex_output.config(text="0x"+hex_output_text_split.upper())
+    hex_output_text = hex(int(sign + binary_exponent + binary_mantissa, 2))[2:].zfill(16)
+    hex_output_text_formatted = ' '.join([hex_output_text[i:i+4] for i in range(0, len(hex_output_text), 4)]).upper()
+    hex_output.config(text="0x"+hex_output_text_formatted)
 
-def decimal_convert_to_normalized_binary(decimal, exponent):
-    
+def convert_decimal_to_normalized_binary(decimal, exponent):
+    # Converts decimal input to normalized IEEE-754 Binary128 binary representation.
+
     dec = adjust_decimal(decimal, exponent)
-    print(dec)
-
     if "." not in dec:
         dec += ".0"
-    # Split the decimal into integer and fractional parts
+
     integer_part, fractional_part = str(dec).split('.')
-
-    # Convert the integer part to binary
     integer_binary = bin(int(integer_part))[2:]
-
-    # Convert the fractional part to binary (with precision limitation)
     fraction = fraction_to_binary(float("0."+fractional_part))
 
-    # Combine integer and fractional binary parts
     binary = integer_binary + '.' + fraction
-
-    # Normalize the binary 
     normalized_binary, new_exponent = normalize_binary(binary, 0)
-
-    print(normalized_binary, "  ", new_exponent)
 
     return normalized_binary, new_exponent
 
+# ------------------ Helper Functions ------------------
 def normalize_binary(binary, exponent):
+    # Normalizes a binary number (string) in the form '1.xxxx...' and returns the fractional part of the normalized version.
+    
     # Find the position of the first '1' before the decimal point
     dot_position = binary.find('.')
     first_one_position = binary.find('1')
-    print(first_one_position, " ", dot_position)
 
-    # Shift the decimal point (adjusting the exponent) 
+    shift = 0  # Shift used for adjusting the exponent
     if first_one_position < dot_position: 
         binary = binary[:dot_position]+binary[dot_position+1:]
         shift = dot_position - first_one_position - 1
         normalized_binary = '1.' + binary[dot_position-shift:]
-        new_exponent = -shift
+        new_exponent = shift
     else:  
         binary = binary[:dot_position]+binary[dot_position+1:]
         shift = first_one_position - dot_position
         normalized_binary = binary[first_one_position-1] + "." + binary[first_one_position:]
-        new_exponent = shift 
-
+        new_exponent = +shift 
     new_exponent += exponent
-
-    print(normalized_binary)
 
     return normalized_binary[2:], new_exponent
 
 def adjust_decimal(decimal_str, exponent):
-    # Convert the decimal string to a Decimal object
-    decimal_value = Decimal(decimal_str)
-    print(decimal_value)
     # Multiply the decimal value by 10^exponent
     adjusted_value = Decimal(decimal_str) * Decimal(str(10 ** exponent))
     
     # Convert the adjusted value back to a string
-    adjusted_str = str(adjusted_value)
+    adjusted_str = str(float(adjusted_value))
     
     return adjusted_str
 
@@ -171,7 +151,7 @@ def fraction_to_binary(fraction, precision=112):
 
     return binary  
 
-# GUI LOGIC
+# ------------------ GUI LOGIC ------------------
 def update_label():
     selected_conversion_type = conversion_type.get()
     print(selected_conversion_type)
