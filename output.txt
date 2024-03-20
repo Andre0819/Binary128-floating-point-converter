@@ -1,0 +1,5 @@
+Sign Bit: 1
+Binary Exponent: 100010010111011
+Binary Mantissa: 1101110...0
+Full Binary Output: 1  100010010111011  1101110...0
+Hexadecimal Output: 0xC4BB DC00 0000 0000 0000 0000 0000 0000

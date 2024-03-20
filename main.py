@@ -8,6 +8,8 @@ Decimal = decimal.Decimal
 # Main Convert Logic
 def convert():
     clear_output()
+    if empty_input():
+        return 0
     sign_bit = "0"
     # Get the selected conversion type 
     selected_conversion_type = conversion_type.get()
@@ -180,6 +182,12 @@ def update_label():
         label_mantissa_dec.config(text="Decimal:")
         label_exponent.config(text="Base-10 Exponent:")
 
+def empty_input():
+    if not input_mantissa_dec.get() or not exp_input.get():
+        error_message.config(text="Error: Fields are empty.")
+        return True
+    return False
+
 def clear():
     clear_input()
     clear_output()
@@ -196,60 +204,57 @@ def clear_input():
 
 # Create the Tkinter window
 window = tk.Tk()
-window.geometry("900x400")  # Set the window size to 400x300 pixels
+window.geometry("1000x500")  # Set the window size to 400x300 pixels
+window.configure(bg="#CEEDDB")
 
-# Create a frame for the radio buttons
-radio_frame = tk.Frame(window)
-radio_frame.pack()
-
-# Create the radio buttons for selecting conversion type
-conversion_type = tk.StringVar(window)
-conversion_type.set("Binary")  # Set the default option
-
-radio_binary = tk.Radiobutton(radio_frame, text="Binary", variable=conversion_type, value="Binary", command=update_label)
-radio_binary.pack(side="left")
-
-radio_decimal = tk.Radiobutton(radio_frame, text="Decimal", variable=conversion_type, value="Decimal", command=update_label)
-radio_decimal.pack(side="left")
-
-# sign_frame = tk.Frame(window)
-# sign_frame.pack()
-# inner_sign_frame = tk.Frame(sign_frame)
-# inner_sign_frame.pack()
-# # Create the sign option menu
-# label_sign = tk.Label(inner_sign_frame, text="Sign:")
-# label_sign.pack(side="top", padx=5)
-# sign = tk.StringVar(inner_sign_frame)
-# sign.set("Negative")
-# sign_option_menu = tk.OptionMenu(inner_sign_frame, sign, "Negative", "Positive")
-# sign_option_menu.pack(side="left")
-
+title_frame = tk.Frame(window)
+title_frame.pack(fill="x")
+title_frame.config(bg="#544E61", bd=1, relief="solid", highlightbackground="black")
+title_label = tk.Label(title_frame, text="IEEE-754 Binary-128 floating point converter", font=("Arial", 20), foreground="white", bg="#544E61")
+title_label.pack()
 
 # Create a frame for the inputs
 input_frame = tk.Frame(window)
+input_frame.configure(bg="#D6BBC0", bd=1, relief="solid", highlightbackground="black")
 input_frame.pack(pady=5)
+input_title = tk.Label(input_frame, text="Input", font=("Arial", 15), foreground="black", bg="#D6BBC0")
+input_title.pack()
 
-input_frame1 = tk.Frame(window)
-input_frame1.pack( padx=10)
-input_frame2 = tk.Frame(window)
-input_frame2.pack( padx=10)
+# Create a frame for the radio buttons
+radio_frame = tk.Frame(input_frame)
+radio_frame.pack(side="top")
+
+# Create the radio buttons for selecting conversion type
+conversion_type = tk.StringVar(input_frame)
+conversion_type.set("Binary")  # Set the default option
+
+radio_binary = tk.Radiobutton(radio_frame, text="Binary", bg="#D6BBC0", foreground="black", variable=conversion_type, value="Binary", font=("Arial", 12) ,command=update_label)
+radio_binary.pack(side="left")
+
+radio_decimal = tk.Radiobutton(radio_frame, text="Decimal", bg="#D6BBC0", foreground="black", variable=conversion_type, value="Decimal", font=("Arial", 12), command=update_label)
+radio_decimal.pack(side="left")
+
+input_frame1 = tk.Frame(input_frame)
+input_frame1.pack( padx=10, pady=5)
+input_frame2 = tk.Frame(input_frame)
+input_frame2.pack( padx=10, pady=5)
 
 
 
 # Create the float input label and entry widget
-label_mantissa_dec = tk.Label(input_frame1, text="Binary:")
+label_mantissa_dec = tk.Label(input_frame1, text="Binary:", font=("Arial", 10), bg="#D6BBC0")
 label_mantissa_dec.pack(side="left")
 input_mantissa_dec = tk.Entry(input_frame1, width=100)
 input_mantissa_dec.pack(side="left")
 
 # Create the integer input label and entry widget
-label_exponent = tk.Label(input_frame2, text="Base-2 Exponent:")
+label_exponent = tk.Label(input_frame2, text="Base-2 Exponent:", font=("Arial", 10), bg="#D6BBC0")
 label_exponent.pack(side="left")
 exp_input = tk.Entry(input_frame2, width=100)
 exp_input.pack(side="left")
 
 # Create Error message
-error_message = tk.Label(window, text="")
+error_message = tk.Label(window, text="", bg="#CEEDDB")
 error_message.pack(pady=5)
 
 # Create the convert button
@@ -258,21 +263,24 @@ button_convert.pack(pady=5)
 
 # Create 2 output fields
 output_frame = tk.Frame(window)
-output_frame.pack()
+output_frame.configure(bg="#D6BBC0", bd=1, relief="solid", highlightbackground="black")
+output_frame.pack(pady=5, fill="x", padx=20)
+output_title = tk.Label(output_frame, text="Output", font=("Arial", 15), foreground="black", bg="#D6BBC0")
+output_title.pack()
 
 output_frame1 = tk.Frame(output_frame)
-output_frame1.pack(side="top")
+output_frame1.pack(side="top", pady=5)
 output_frame2 = tk.Frame(output_frame)
-output_frame2.pack(side="bottom")
+output_frame2.pack(side="bottom", pady=5)
 
-label_binaryout = tk.Label(output_frame1, text="Binary Output:")
+label_binaryout = tk.Label(output_frame1, text="Binary Output:", bg="#D6BBC0")
 label_binaryout.pack(side="left")
-binary_output = tk.Label(output_frame1, text="")
+binary_output = tk.Label(output_frame1, text="", bg="#D6BBC0")
 binary_output.pack(side="left")
 
-label_hexout = tk.Label(output_frame2, text="Hexadecimal Output:")
+label_hexout = tk.Label(output_frame2, text="Hexadecimal Output:", bg="#D6BBC0")
 label_hexout.pack(side="left")
-hex_output = tk.Label(output_frame2, text="")
+hex_output = tk.Label(output_frame2, text="", bg="#D6BBC0")
 hex_output.pack(side="left")
 
 # Create the clear button
