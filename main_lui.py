@@ -53,7 +53,7 @@ def binary_convert_to_floating_point(sign, mantissa, exponent):
     infinite_flag = False
     # Set sign bit
     sign_bit = sign
-    
+
     # Compute binary of exponent
     if exponent <= 16383 and exponent >= -16382:
         binary_exponent = bin((exponent + 16383))[2:].zfill(15)
@@ -62,7 +62,7 @@ def binary_convert_to_floating_point(sign, mantissa, exponent):
         infinite_flag = True
     elif exponent < -16382:
         binary_exponent = "000000000000000"
-    
+
     # Compute binary of mantissa
     if infinite_flag == False:
         binary_mantissa = mantissa + str(bin(0)[2:].zfill(112-len(mantissa)))
@@ -111,19 +111,19 @@ def normalize_binary(binary):
     first_one_position = binary.find('1')
     print(first_one_position, " ", dot_position)
 
-    # Shift the decimal point (adjusting the exponent) 
-    if first_one_position < dot_position: 
+    # Shift the decimal point (adjusting the exponent)
+    if first_one_position < dot_position:
         binary = binary[:dot_position]+binary[dot_position+1:]
         shift = dot_position - first_one_position - 1
         normalized_binary = '1.' + binary[dot_position-shift:]
         new_exponent = -shift
-    else:  
+    else:
         binary = binary[:dot_position]+binary[dot_position+1:]
         shift = first_one_position - dot_position
         normalized_binary = binary[first_one_position-1] + "." + binary[first_one_position:]
-        new_exponent = shift 
+        new_exponent = shift
 
-    return normalized_binary[2:], new_exponent 
+    return normalized_binary[2:], new_exponent
 
 def fraction_to_binary(fraction, precision=112):
     binary = ""
@@ -157,59 +157,75 @@ def clear():
 # Create the Tkinter window
 window = tk.Tk()
 window.geometry("600x400")  # Set the window size to 400x300 pixels
+window.configure(bg="#CEEDDB")
+
+title_frame = tk.Frame(window)
+title_frame.pack(fill="x")
+title_frame.config(bg="#544E61", bd=1, relief="solid", highlightbackground="black")
+title_label = tk.Label(title_frame, text="IEEE-754 Binary-128 floating point converter", font=("Arial", 20), foreground="white", bg="#544E61")
+title_label.pack()
+
+# Create a frame for the inputs
+input_frame = tk.Frame(window)
+input_frame.configure(bg="#D6BBC0", bd=1, relief="solid", highlightbackground="black")
+input_frame.pack(pady=5)
+input_title = tk.Label(input_frame, text="Input", font=("Arial", 15), foreground="black", bg="#D6BBC0")
+input_title.pack()
 
 # Create a frame for the radio buttons
-radio_frame = tk.Frame(window)
-radio_frame.pack()
+radio_frame = tk.Frame(input_frame)
+radio_frame.pack(side="top")
 
 # Create the radio buttons for selecting conversion type
 conversion_type = tk.StringVar(window)
 conversion_type.set("Binary")  # Set the default option
 
-radio_binary = tk.Radiobutton(radio_frame, text="Binary", variable=conversion_type, value="Binary", command=update_label)
+radio_binary = tk.Radiobutton(radio_frame, text="Binary",bg="#D6BBC0", variable=conversion_type, value="Binary", command=update_label)
 radio_binary.pack(side="left")
 
-radio_decimal = tk.Radiobutton(radio_frame, text="Decimal", variable=conversion_type, value="Decimal", command=update_label)
+radio_decimal = tk.Radiobutton(radio_frame, text="Decimal",bg="#D6BBC0", variable=conversion_type, value="Decimal", command=update_label)
 radio_decimal.pack(side="left")
 
-sign_frame = tk.Frame(window)
+sign_frame = tk.Frame(input_frame)
 sign_frame.pack()
-inner_sign_frame = tk.Frame(sign_frame)
+inner_sign_frame = tk.Frame(sign_frame, bg="#D6BBC0")
 inner_sign_frame.pack()
+
 # Create the sign option menu
-label_sign = tk.Label(inner_sign_frame, text="Sign:")
+label_sign = tk.Label(inner_sign_frame, text="Sign:",bg="#D6BBC0")
 label_sign.pack(side="top", padx=5)
 sign = tk.StringVar(inner_sign_frame)
 sign.set("Negative")
 sign_option_menu = tk.OptionMenu(inner_sign_frame, sign, "Negative", "Positive")
+sign_option_menu.config(bg="#D6BBC0")
 sign_option_menu.pack(side="left")
 
 
 # Create a frame for the inputs
-input_frame = tk.Frame(window)
+input_frame = tk.Frame(input_frame,bg="#D6BBC0")
 input_frame.pack(pady=5)
 
-input_frame1 = tk.Frame(input_frame)
+input_frame1 = tk.Frame(input_frame,bg="#D6BBC0")
 input_frame1.pack(side="left", padx=10)
-input_frame2 = tk.Frame(input_frame)
+input_frame2 = tk.Frame(input_frame,bg="#D6BBC0")
 input_frame2.pack(side="left", padx=10)
 
 
 
 # Create the float input label and entry widget
-label_mantissa_dec = tk.Label(input_frame1, text="Binary Mantissa:")
+label_mantissa_dec = tk.Label(input_frame1, text="Binary Mantissa:",bg="#D6BBC0")
 label_mantissa_dec.pack(side="top")
 input_mantissa_dec = tk.Entry(input_frame1)
 input_mantissa_dec.pack(side="left")
 
 # Create the integer input label and entry widget
-label_exponent = tk.Label(input_frame2, text="Base-2 Exponent:")
+label_exponent = tk.Label(input_frame2, text="Base-2 Exponent:",bg="#D6BBC0")
 label_exponent.pack(side="top")
 exp_input = tk.Entry(input_frame2)
 exp_input.pack(side="left")
 
 # Create Error message
-error_message = tk.Label(window, text="")
+error_message = tk.Label(window, text="",bg="#CEEDDB")
 error_message.pack(pady=5)
 
 # Create the convert button
@@ -218,21 +234,22 @@ button_convert.pack(pady=5)
 
 # Create 2 output fields
 output_frame = tk.Frame(window)
+output_frame.configure(bg="#D6BBC0", bd=1, relief="solid", highlightbackground="black")
 output_frame.pack()
 
-output_frame1 = tk.Frame(output_frame)
+output_frame1 = tk.Frame(output_frame,bg="#D6BBC0")
 output_frame1.pack(side="top")
 output_frame2 = tk.Frame(output_frame)
 output_frame2.pack(side="bottom")
 
-label_binaryout = tk.Label(output_frame1, text="Binary Output:")
+label_binaryout = tk.Label(output_frame1, text="Binary Output:",bg="#D6BBC0")
 label_binaryout.pack(side="left")
-binary_output = tk.Label(output_frame1, text="")
+binary_output = tk.Label(output_frame1, text="",bg="#D6BBC0")
 binary_output.pack(side="left")
 
-label_hexout = tk.Label(output_frame2, text="Hexadecimal Output:")
+label_hexout = tk.Label(output_frame2, text="Hexadecimal Output:",bg="#D6BBC0")
 label_hexout.pack(side="left")
-hex_output = tk.Label(output_frame2, text="")
+hex_output = tk.Label(output_frame2, text="",bg="#D6BBC0")
 hex_output.pack(side="left")
 
 # Create the clear button
