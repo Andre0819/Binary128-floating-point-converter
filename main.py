@@ -1,9 +1,11 @@
 import tkinter as tk
 import decimal
 import sys
-sys.set_int_max_str_digits(5000)
+sys.set_int_max_str_digits(20000)
 decimal.getcontext().prec = 112
 Decimal = decimal.Decimal
+
+import numpy as np
 
 MAX_MANTISSA_LENGTH = 112
 
@@ -15,17 +17,19 @@ def convert():
     sign_bit = "0"
     # Get the selected conversion type 
     selected_conversion_type = conversion_type.get()
+
+    number_input = str(input_mantissa_dec.get())
     
     # Get the float input from the entry widget
     if selected_conversion_type == "Binary":
-        binary_input = str(input_mantissa_dec.get())
+        binary_input = number_input
 
         if binary_input[0] == "-":
             sign_bit = "1"
             binary_input = binary_input[1:]
 
         if not all(bit in '01.' for bit in binary_input) or binary_input.count('.') > 1: 
-            error_message.config(text="Error: Invalid binary input.")
+            error_message.config(text="Error: Invalid binary input.") 
             return 0
          # Get the exponent integer input from the entry widget
         try:
@@ -33,12 +37,13 @@ def convert():
         except ValueError:
             error_message.config(text="Error: Invalid exponent input. Must be integer.")
             return 0
+        
         mantissa, exponent = normalize_binary(binary_input, exponent_input)
         mantissa = limit_mantissa(mantissa)
         print("normalized: ", mantissa, exponent)
         convert_binary_to_floating_point(sign_bit, mantissa, exponent)
     else:
-        float_input = str(input_mantissa_dec.get())
+        float_input = number_input
         if float_input[0] == "-":
             sign_bit = "1"
             float_input = float_input[1:]
@@ -75,57 +80,155 @@ def convert_binary_to_floating_point(sign, mantissa, exponent):
     binary_output.config(text=sign + "  " + binary_exponent + "  " + binary_mantissa)
 
     # Print hexadecimal output
-    hex_output_text = hex(int(sign + binary_exponent + binary_mantissa, 2))[2:].zfill(16)
+    hex_output_text = hex_output_formatting(sign, binary_exponent, binary_mantissa)
     hex_output_text_formatted = ' '.join([hex_output_text[i:i+4] for i in range(0, len(hex_output_text), 4)]).upper()
     hex_output.config(text="0x"+hex_output_text_formatted)
 
 def convert_decimal_to_normalized_binary(decimal, exponent):
     # Converts decimal input to normalized IEEE-754 Binary128 binary representation.
 
-    dec = adjust_decimal(decimal, exponent)
-    if "." not in dec:
-        dec += ".0"
+    integer_part, fractional_part = adjust_decimal(decimal, exponent)
 
-    integer_part, fractional_part = str(dec).split('.')
-    integer_binary = bin(int(integer_part))[2:]
-    fraction = fraction_to_binary(float("0."+fractional_part))
+    # Convert to binary
+    binary = decimal_to_binary(integer_part, fractional_part)
 
-    binary = integer_binary + '.' + fraction
     normalized_binary, new_exponent = normalize_binary(binary, 0)
 
-    return normalized_binary, new_exponent
+    return normalized_binary, new_exponent-1
 
 # ------------------ Helper Functions ------------------
 def normalize_binary(binary, exponent):
-    # Normalizes a binary number (string) in the form '1.xxxx...' and returns the fractional part of the normalized version.
-    
-    # Find the position of the first '1' before the decimal point
+    new_exponent = 0
+    # if binary does not contain a decimal point
+    if '.' not in binary:
+        binary = binary + '.0'
+
     dot_position = binary.find('.')
     first_one_position = binary.find('1')
+    if (first_one_position == -1):
+        return "0"*112, -999999 # Exponent set to 999999 for special cases meant to have exponent bits 000 0000 0000 0000 0000
+    print(dot_position, first_one_position)
+     
+    if exponent < -16382 :
+        # Shift the decimal point to the left until exponent reaches -16382
+        while exponent < -16382:
+            if dot_position == 1:
+                binary = '0.' + binary[0] + binary[2:]
+            else:
+                binary = binary[:dot_position-2] + '.' + binary[dot_position-1] + binary[dot_position+1:]
+                dot_position -= 1
+            exponent += 1
 
-    shift = 0  # Shift used for adjusting the exponent
-    if first_one_position < dot_position: 
-        binary = binary[:dot_position]+binary[dot_position+1:]
-        shift = dot_position - first_one_position - 1
-        normalized_binary = '1.' + binary[dot_position-shift:]
-        new_exponent = shift
-    else:  
-        binary = binary[:dot_position]+binary[dot_position+1:]
-        shift = first_one_position - dot_position
-        normalized_binary = binary[first_one_position-1] + "." + binary[first_one_position:]
-        new_exponent = +shift 
+        normalized_binary = binary
+    else:
+        
+        # Shift the decimal point until the string becomes 1.f where f is the other digits in the string
+        shift = 0  # Shift used for adjusting the exponent
+        if first_one_position < dot_position: 
+            binary = binary[:dot_position]+binary[dot_position+1:]
+            shift = dot_position - first_one_position - 1
+            normalized_binary = '1.' + binary[dot_position-shift:]
+            new_exponent = shift
+        else:  
+            binary = binary[:dot_position]+binary[dot_position+1:]
+            shift = first_one_position - dot_position
+            normalized_binary = binary[first_one_position-1] + "." + binary[first_one_position:]
+            new_exponent = +shift 
+
     new_exponent += exponent
+
+    print("shifting: ", normalized_binary, exponent)
+
+    # Normalizes a binary number (string) in the form '1.xxxx...' and returns the fractional part of the normalized version.
+    # dot_position = 0
+    # # Find the position of the first '1' before the decimal point
+    # dot_position = binary.find('.')
+    # first_one_position = binary.find('1')
+
+    # shift = 0  # Shift used for adjusting the exponent
+    # if first_one_position < dot_position: 
+    #     binary = binary[:dot_position]+binary[dot_position+1:]
+    #     shift = dot_position - first_one_position - 1
+    #     normalized_binary = '1.' + binary[dot_position-shift:]
+    #     new_exponent = shift
+    # else:  
+    #     binary = binary[:dot_position]+binary[dot_position+1:]
+    #     shift = first_one_position - dot_position
+    #     normalized_binary = binary[first_one_position-1] + "." + binary[first_one_position:]
+    #     new_exponent = +shift 
+    # new_exponent += exponent
 
     return normalized_binary[2:], new_exponent
 
+def hex_output_formatting(sign, exponent, mantissa):
+    binary_rep = sign + exponent + mantissa
+
+    hex_rep = ""
+
+    hex_dict = {
+        "0000" : "0",
+        "0001" : "1",
+        "0010" : "2",
+        "0011" : "3",
+        "0100" : "4",
+        "0101" : "5",
+        "0110" : "6",
+        "0111" : "7",
+        "1000" : "8",
+        "1001" : "9",
+        "1010" : "A",
+        "1011" : "B",
+        "1100" : "C",
+        "1101" : "D",
+        "1110" : "E",
+        "1111" : "F"
+    }
+
+    for i in range(0, len(binary_rep), 4):
+        hex_rep += hex_dict[binary_rep[i:i+4]]
+
+    return hex_rep
+
 def adjust_decimal(decimal_str, exponent):
-    # Multiply the decimal value by 10^exponent
-    adjusted_value = Decimal(decimal_str) * Decimal(str(10 ** exponent))
-    
-    # Convert the adjusted value back to a string
-    adjusted_str = str(float(adjusted_value))
-    
-    return adjusted_str
+    print(decimal_str, exponent)
+     # Set the decimal context for high precision
+    context = decimal.getcontext()
+    context.prec = 4999
+
+    # Convert the decimal string to a decimal object for accurate calculations
+    adjusted_value = decimal.Decimal(decimal_str) * decimal.Decimal(10**exponent)
+
+    # Handle zero case
+    if adjusted_value == 0:
+        return 0, 0
+
+    # Extract the integer and fractional parts
+    integer_part = int(adjusted_value)
+    fractional_part = adjusted_value % 1
+    print(integer_part, fractional_part)
+
+    return integer_part, fractional_part
+
+def decimal_to_binary(decimal, fraction):
+    # Convert the integer part to binary (NumPy)
+    binary_integer = bin(decimal)[2:]  # Remove '0b' prefix
+
+    # Convert the fractional part (repeated division by 2)
+    binary_fraction = ""
+    while fraction > 0:
+        fraction *= 2
+        if fraction >= 1:
+            binary_fraction += "1"
+            fraction -= 1
+        else:
+            binary_fraction += "0"
+        # Limit the number of fractional digits (adjust precision as needed)
+        if len(binary_fraction) > 5000:
+            break
+
+    # Combine integer and fractional parts (handle potential leading zero in fraction)
+    binary_string = binary_integer + ("0" if not binary_fraction else ".") + binary_fraction
+    return binary_string
 
 def limit_mantissa(mantissa):
     if len(mantissa) > 112:
