@@ -16,6 +16,12 @@ Decimal = decimal.Decimal
 MATH_OPERATORS = ["+", "-", "*", "/", "^", "√"]
 MAX_MANTISSA_LENGTH = 112
 
+# Variables for output.txt
+output_sign = ""
+output_exponent = ""
+output_mantissa = ""
+
+
 # Main Convert Logic
 def convert():
     clear_output()
@@ -84,6 +90,8 @@ def convert():
 
 
 def convert_binary_to_floating_point(sign, mantissa, exponent):
+    global output_sign, output_exponent, output_mantissa
+
     # Converts normalized binary input to IEEE-754 Binary128 floating-point representation.
     infinite_flag = False
     
@@ -136,6 +144,11 @@ def convert_binary_to_floating_point(sign, mantissa, exponent):
         special_case_value = "Denormalized"
 
     special_case.config(text=special_case_value)
+
+    output_sign = sign
+    output_exponent = binary_exponent
+    output_mantissa = binary_mantissa
+
 
 def convert_decimal_to_normalized_binary(decimal, exponent):
     # Converts decimal input to normalized IEEE-754 Binary128 binary representation.
@@ -465,11 +478,12 @@ button_clear = tk.Button(window, text="Clear", width=7, height=1, font=("Arial",
 button_clear.pack(pady=5)
 
 def export_output():
+    global output_mantissa, output_exponent, output_sign
     convert()
     # Get the details to export
-    sign_bit = binary_output.cget("text").split()[0]
-    binary_exponent = binary_output.cget("text").split()[1]
-    binary_mantissa = binary_output.cget("text").split()[2]
+    sign_bit = output_sign
+    binary_exponent = output_exponent
+    binary_mantissa = output_mantissa
 
     # Create the file path
     file_path = "./output.txt"
