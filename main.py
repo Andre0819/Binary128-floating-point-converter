@@ -1,4 +1,4 @@
-# CSARCH2 - Group 8 |  Binary-128 floating point converter
+# CSARCH2 - Group 8 - S12 |  Binary-128 floating point converter
 # Members:
 # Apa, Giusippi Maria II D.
 # Aquino, Karl Andre F.
