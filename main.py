@@ -19,6 +19,9 @@ def convert():
     selected_conversion_type = conversion_type.get()
 
     number_input = str(input_mantissa_dec.get())
+    if (number_input[0] == "-"):
+        sign_bit = "1"
+        number_input = number_input[1:]
     exponent_input = str(exp_input.get())
 
     if any(bit.isalpha() for bit in number_input) or any(bit.isalpha() for bit in exponent_input) or number_input.count('.') > 1:
@@ -29,24 +32,26 @@ def convert():
         return 0
         
     if any(bit in MATH_OPERATORS for bit in number_input) or any(bit.isalpha() for bit in exponent_input):
-        if any(bit in ["-∞", "∞"] for bit in number_input) or any(bit in ["-∞", "∞"] for bit in exponent_input):
+        if any(bit in "∞" for bit in number_input) or any(bit in "∞" for bit in exponent_input):
             output_NaN("qNaN")
             return 0
-        if number_input in ["0/0", "-0/0", "0/-0", "-0/-0"]:
+        if number_input in ["0/0", "-0/0", "0/-0", "-0/-0"] or exponent_input in ["0/0", "-0/0", "0/-0", "-0/-0"]:
             output_NaN("qNaN")
             return 0
-        if "√-" in number_input:
-            if number_input[number_input.find("√-") + 2] in ["1", "2", "3", "4", "5", "6", "7", "8", "9"]:
+        if "√-" in number_input or  "√-" in exponent_input:
+            if number_input[number_input.find("√-") + 2] in ["1", "2", "3", "4", "5", "6", "7", "8", "9"] or exponent_input[exponent_input.find("√-") + 2] in ["1", "2", "3", "4", "5", "6", "7", "8", "9"]:
                 output_NaN("qNaN")
                 return 0
             else:
                 output_NaN("sNaN")
                 return 0
+        output_NaN("sNaN")
+        return 0
     
     # Get the float input from the entry widget
     if selected_conversion_type == "Binary":
         binary_input = number_input
-        
+
         if not all(bit in '01.' for bit in binary_input) : 
             error_message.config(text="Error: Invalid binary input.") 
             return 0
@@ -90,19 +95,22 @@ def convert_binary_to_floating_point(sign, mantissa, exponent):
     if infinite_flag == False:
         # Truncation logic remains the same
         binary_mantissa = mantissa[:MAX_MANTISSA_LENGTH] + "0" * (MAX_MANTISSA_LENGTH - len(mantissa))
+        shortened_mantissa = mantissa[:MAX_MANTISSA_LENGTH] + ("0...0" * 1 if (MAX_MANTISSA_LENGTH - len(mantissa) > 3 ) else "0" * (MAX_MANTISSA_LENGTH - len(mantissa)))
     else:
         binary_mantissa = "0" * MAX_MANTISSA_LENGTH
+        shortened_mantissa = "0...0"
 
     print("sign bit: ", sign)
     print("binary exponent: ", binary_exponent)
     print("binary mantissa: ", binary_mantissa)
 
-    binary_output.config(text=sign + "  " + binary_exponent + "  " + binary_mantissa)
+    binary_output.config(text=sign + "  " + binary_exponent + "  " + shortened_mantissa)
 
     # Print hexadecimal output
     hex_output_text = hex_output_formatting(sign, binary_exponent, binary_mantissa)
     hex_output_text_formatted = ' '.join([hex_output_text[i:i+4] for i in range(0, len(hex_output_text), 4)]).upper()
     hex_output.config(text="0x"+hex_output_text_formatted)
+    print("hex output: ", "0x"+hex_output_text_formatted)
 
 def convert_decimal_to_normalized_binary(decimal, exponent):
     # Converts decimal input to normalized IEEE-754 Binary128 binary representation.
@@ -250,18 +258,24 @@ def output_NaN(NaN):
     if NaN == "sNaN":
         sign = "0"
         exponent = "111111111111111"
-        mantissa = "1" + "0" * 111
+        mantissa = "01" + "0" * 110
     else:
         sign = "0"
         exponent = "111111111111111"
-        mantissa = "01" + "0" * 110
+        mantissa = "1" + "0" * 111
 
     binary_output.config(text=sign + "  " + exponent + "  " + mantissa)
+
+    print("sign bit: ", sign)
+    print("binary exponent: ", exponent)
+    print("binary mantissa: ", mantissa)
 
     # Print hexadecimal output
     hex_output_text = hex_output_formatting(sign, exponent, mantissa)
     hex_output_text_formatted = ' '.join([hex_output_text[i:i+4] for i in range(0, len(hex_output_text), 4)]).upper()
     hex_output.config(text="0x"+hex_output_text_formatted)
+
+    print("hex output: ", "0x"+hex_output_text_formatted)
 
 def hex_output_formatting(sign, exponent, mantissa):
     binary_rep = sign + exponent + mantissa
