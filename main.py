@@ -5,7 +5,6 @@ sys.set_int_max_str_digits(20000)
 decimal.getcontext().prec = 112
 Decimal = decimal.Decimal
 
-ALPHABET = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"]
 MATH_OPERATORS = ["+", "-", "*", "/", "^", "√"]
 MAX_MANTISSA_LENGTH = 112
 
@@ -111,6 +110,24 @@ def convert_binary_to_floating_point(sign, mantissa, exponent):
     hex_output_text_formatted = ' '.join([hex_output_text[i:i+4] for i in range(0, len(hex_output_text), 4)]).upper()
     hex_output.config(text="0x"+hex_output_text_formatted)
     print("hex output: ", "0x"+hex_output_text_formatted)
+
+    special_case_value = "Normal"
+    if sign == "0" and binary_exponent == "111111111111111" and binary_mantissa == "01" + "0" * 110:
+        special_case_value = "sNaN"
+    elif sign == "0" and binary_exponent == "111111111111111" and binary_mantissa == "1" + "0" * 111:
+        special_case_value = "qNaN"
+    elif sign == "0" and binary_exponent == "000000000000000" and binary_mantissa == "0" * 112:
+        special_case_value = "Zero"
+    elif sign == "1" and binary_exponent == "000000000000000" and binary_mantissa == "0" * 112:
+        special_case_value = "- Zero"
+    elif sign == "1" and binary_exponent == "111111111111111" and binary_mantissa == "0" * 112:
+        special_case_value = "- Infinity"
+    elif sign == "0" and binary_exponent == "111111111111111" and binary_mantissa == "0" * 112:
+        special_case_value = "+ Infinity"
+    elif binary_exponent == "000000000000000" and binary_mantissa != "0" * 112:
+        special_case_value = "Denormalized"
+
+    special_case.config(text=special_case_value)
 
 def convert_decimal_to_normalized_binary(decimal, exponent):
     # Converts decimal input to normalized IEEE-754 Binary128 binary representation.
@@ -277,6 +294,14 @@ def output_NaN(NaN):
 
     print("hex output: ", "0x"+hex_output_text_formatted)
 
+    special_case_value = "Normal"
+    if sign == "0" and exponent == "111111111111111" and mantissa == "01" + "0" * 110:
+        special_case_value = "sNaN"
+    elif sign == "0" and exponent == "111111111111111" and mantissa == "1" + "0" * 111:
+        special_case_value = "qNaN"
+
+    special_case.config(text=special_case_value)
+
 def hex_output_formatting(sign, exponent, mantissa):
     binary_rep = sign + exponent + mantissa
 
@@ -345,14 +370,14 @@ window.configure(bg="#CEEDDB")
 title_frame = tk.Frame(window)
 title_frame.pack(fill="x")
 title_frame.config(bg="#544E61", bd=1, relief="solid", highlightbackground="black")
-title_label = tk.Label(title_frame, text="IEEE-754 Binary-128 floating point converter", font=("Arial", 20), foreground="white", bg="#544E61")
+title_label = tk.Label(title_frame, text="IEEE-754 Binary-128 floating point converter", font=("Franklin Gothic Medium", 20), foreground="white", bg="#544E61")
 title_label.pack()
 
 # Create a frame for the inputs
 input_frame = tk.Frame(window)
 input_frame.configure(bg="#D6BBC0", bd=1, relief="solid", highlightbackground="black")
 input_frame.pack(pady=5)
-input_title = tk.Label(input_frame, text="Input", font=("Arial", 15), foreground="black", bg="#D6BBC0")
+input_title = tk.Label(input_frame, text="Input", font=("Franklin Gothic Medium", 15), foreground="black", bg="#D6BBC0")
 input_title.pack()
 
 # Create a frame for the radio buttons
@@ -393,33 +418,41 @@ error_message = tk.Label(window, text="", bg="#CEEDDB")
 error_message.pack(pady=5)
 
 # Create the convert button
-button_convert = tk.Button(window, text="Convert", command=convert)
+button_convert = tk.Button(window, text="Convert", width=14, height=1, font=("Arial", 12), bg="#4E5166", foreground="white", command=convert)
 button_convert.pack(pady=5)
 
 # Create 2 output fields
 output_frame = tk.Frame(window)
 output_frame.configure(bg="#D6BBC0", bd=1, relief="solid", highlightbackground="black")
 output_frame.pack(pady=5, fill="x", padx=20)
-output_title = tk.Label(output_frame, text="Output", font=("Arial", 15), foreground="black", bg="#D6BBC0")
+output_title = tk.Label(output_frame, text="Output", font=("Franklin Gothic Medium", 15), foreground="black", bg="#D6BBC0")
 output_title.pack()
 
-output_frame1 = tk.Frame(output_frame)
+output_frame0 = tk.Frame(output_frame, bg="#EFEFEF", bd=1,  relief="solid", highlightbackground="black")
+output_frame0.pack(side="top", pady=5)
+output_frame1 = tk.Frame(output_frame, bg="#DEF6CA", bd=1,  relief="solid", highlightbackground="black")
 output_frame1.pack(side="top", pady=5)
-output_frame2 = tk.Frame(output_frame)
-output_frame2.pack(side="bottom", pady=5)
+output_frame2 = tk.Frame(output_frame,  bg="#AEE5D8", bd=1,  relief="solid", highlightbackground="black")
+output_frame2.pack(side="top", pady=5)
 
-label_binaryout = tk.Label(output_frame1, text="Binary Output:", bg="#D6BBC0")
+
+label_special = tk.Label(output_frame0, text="Special Case:", bg="#EFEFEF")
+label_special.pack(side="left")
+special_case = tk.Label(output_frame0, text="", bg="#EFEFEF")
+special_case.pack(side="left")
+
+label_binaryout = tk.Label(output_frame1, text="Binary Output:", bg="#DEF6CA")
 label_binaryout.pack(side="left")
-binary_output = tk.Label(output_frame1, text="", bg="#D6BBC0")
+binary_output = tk.Label(output_frame1, text="", bg="#DEF6CA")
 binary_output.pack(side="left")
 
-label_hexout = tk.Label(output_frame2, text="Hexadecimal Output:", bg="#D6BBC0")
+label_hexout = tk.Label(output_frame2, text="Hexadecimal Output:", bg="#AEE5D8")
 label_hexout.pack(side="left")
-hex_output = tk.Label(output_frame2, text="", bg="#D6BBC0")
+hex_output = tk.Label(output_frame2, text="", bg="#AEE5D8")
 hex_output.pack(side="left")
 
 # Create the clear button
-button_clear = tk.Button(window, text="Clear", command=clear)
+button_clear = tk.Button(window, text="Clear", width=7, height=1, font=("Arial", 11), bg="#4E5166", foreground="white", command=clear)
 button_clear.pack(pady=5)
 
 def export_output():
@@ -443,7 +476,23 @@ def export_output():
             file.write("Input Decimal: {}\n".format(input_mantissa_dec.get()))
             file.write("Input Base-10 Exponent: {}\n".format(exp_input.get()))
 
-        
+        special_case = "Normal"
+        if sign_bit == "0" and binary_exponent == "111111111111111" and binary_mantissa == "01" + "0" * 110:
+            special_case = "sNaN"
+        elif sign_bit == "0" and binary_exponent == "111111111111111" and binary_mantissa == "1" + "0" * 111:
+            special_case = "qNaN"
+        elif sign_bit == "0" and binary_exponent == "000000000000000" and binary_mantissa == "0" * 112:
+            special_case = "Zero"
+        elif sign_bit == "1" and binary_exponent == "000000000000000" and binary_mantissa == "0" * 112:
+            special_case = "- Zero"
+        elif sign_bit == "1" and binary_exponent == "111111111111111" and binary_mantissa == "0" * 112:
+            special_case = "- Infinity"
+        elif sign_bit == "0" and binary_exponent == "111111111111111" and binary_mantissa == "0" * 112:
+            special_case = "+ Infinity"
+        elif binary_exponent == "000000000000000" and binary_mantissa != "0" * 112:
+            special_case = "Denormalized"
+
+        file.write("Special Case: {}\n".format(special_case))
         file.write("Sign Bit: {}\n".format(sign_bit))
         file.write("Binary Exponent: {}\n".format(binary_exponent))
         file.write("Binary Mantissa: {}\n".format(binary_mantissa))
@@ -454,7 +503,7 @@ def export_output():
     error_message.config(text="Exported output as .txt successfully.")
 
 # Create the export button
-button_export = tk.Button(window, text="Output as .txt", command=export_output)
+button_export = tk.Button(window, text="Output as .txt", width=10, height=1, font=("Arial", 11), bg="#4E5166", foreground="white", command=export_output)
 button_export.pack(pady=5)
 
 
