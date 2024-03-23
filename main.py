@@ -1,3 +1,11 @@
+# CSARCH2 - Group 8 |  Binary-128 floating point converter
+# Members:
+# Apa, Giusippi Maria II D.
+# Aquino, Karl Andre F.
+# Miranda, Bien Aaron C. 
+# Rana, Luis Miguel D. F. 
+# Tan, Edward James E. 
+
 import tkinter as tk
 import decimal
 import sys
