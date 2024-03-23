@@ -373,6 +373,7 @@ def clear_input():
 # Create the Tkinter window
 window = tk.Tk()
 window.geometry("1000x500")  # Set the window size to 400x300 pixels
+window.title("IEEE-754 Binary-128 floating point converter")
 window.configure(bg="#CEEDDB")
 
 title_frame = tk.Frame(window)
